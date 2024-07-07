@@ -1,0 +1,125 @@
+<!-- START public/tratamientos.html -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tratamientos</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Listado de Tratamientos</h1>
+        <table id="tratamientos-table" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Costo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <form id="tratamiento-form">
+            <input type="hidden" id="tratamiento-id">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="costo">Costo</label>
+                <input type="number" id="costo" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchTratamientos();
+
+            document.getElementById('tratamiento-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const id = document.getElementById('tratamiento-id').value;
+                const nombre = document.getElementById('nombre').value;
+                const costo = document.getElementById('costo').value;
+
+                if (id) {
+                    // Actualizar tratamiento
+                    fetch(`/api/tratamientos/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, costo })
+                    }).then(response => response.json())
+                      .then(data => {
+                          alert(data.message);
+                          fetchTratamientos();
+                          document.getElementById('tratamiento-form').reset();
+                          document.getElementById('tratamiento-id').value = ''; // Limpiar el campo ID
+                      });
+                } else {
+                    // Crear nuevo tratamiento
+                    fetch('/api/tratamientos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, costo })
+                    }).then(response => response.json())
+                      .then(data => {
+                          alert(data.message);
+                          fetchTratamientos();
+                          document.getElementById('tratamiento-form').reset();
+                      });
+                }
+            });
+        });
+
+        function fetchTratamientos() {
+            fetch('/api/tratamientos')
+                .then(response => response.json())
+                .then(tratamientos => {
+                    const tableBody = document.querySelector('#tratamientos-table tbody');
+                    tableBody.innerHTML = '';
+                    tratamientos.forEach(tratamiento => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${tratamiento.id}</td>
+                            <td>${tratamiento.nombre}</td>
+                            <td>${tratamiento.costo}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="editTratamiento(${tratamiento.id})">Editar</button>
+                                <button class="btn btn-danger" onclick="deleteTratamiento(${tratamiento.id})">Eliminar</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                });
+        }
+
+        function editTratamiento(id) {
+            fetch(`/api/tratamientos/${id}`)
+                .then(response => response.json())
+                .then(tratamiento => {
+                    document.getElementById('tratamiento-id').value = tratamiento.id;
+                    document.getElementById('nombre').value = tratamiento.nombre;
+                    document.getElementById('costo').value = tratamiento.costo;
+                });
+        }
+
+        function deleteTratamiento(id) {
+            if (confirm('¿Estás seguro de eliminar este tratamiento?')) {
+                fetch(`/api/tratamientos/${id}`, {
+                    method: 'DELETE'
+                }).then(response => response.json())
+                  .then(data => {
+                      alert(data.message);
+                      fetchTratamientos();
+                  });
+            }
+        }
+    </script>
+</body>
+</html>
+
+<!-- END public/tratamientos.html -->
